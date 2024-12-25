@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/peer"
-	"io"
 	"os"
+	"syscall"
 )
 
 func main() {
@@ -39,8 +39,8 @@ func main() {
 		_ = coordinator.CreateNetwork(*host + ":" + *port)
 	} else if command == "connect" {
 		err := peer.Connect(*host + ":" + *port)
-		if errors.Is(err, io.EOF) {
-			fmt.Println("peer disconnected, closing connection...")
+		if errors.Is(err, syscall.EPIPE) {
+			fmt.Println("host disconnected, closing connection...")
 		} else if err != nil {
 			fmt.Println("unknown error occurred, closing connection...")
 		}
