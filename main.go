@@ -18,7 +18,7 @@ func main() {
 		// Tell your IDE to ignore these warnings, it is not worth checking them.
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
 
-		fmt.Fprintln(flag.CommandLine.Output(), "Commands: ")
+		fmt.Fprintln(flag.CommandLine.Output(), "Arguments: ")
 		fmt.Fprintln(flag.CommandLine.Output(), "  create-network")
 		fmt.Fprintf(flag.CommandLine.Output(), "    \tact as the network coordinator\n")
 		fmt.Fprintln(flag.CommandLine.Output(), "  connect")
