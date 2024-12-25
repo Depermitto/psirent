@@ -1,10 +1,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/peer"
+	"io"
 	"os"
 )
 
@@ -36,7 +38,12 @@ func main() {
 	if command == "create-network" {
 		_ = coordinator.CreateNetwork(*host + ":" + *port)
 	} else if command == "connect" {
-		_ = peer.Connect(*host + ":" + *port)
+		err := peer.Connect(*host + ":" + *port)
+		if errors.Is(err, io.EOF) {
+			fmt.Println("peer disconnected, closing connection...")
+		} else if err != nil {
+			fmt.Println("unknown error occurred, closing connection...")
+		}
 	} else {
 		fmt.Printf("Unknown command: %s\n", command)
 		os.Exit(1)

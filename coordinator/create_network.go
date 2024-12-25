@@ -2,6 +2,7 @@ package coordinator
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -31,20 +32,16 @@ func CreateNetwork(addr string) error {
 }
 
 // handleConnection is a dummy method that echos back any data that is sent to it
-func handleConnection(conn net.Conn) error {
+func handleConnection(conn net.Conn) (err error) {
 	defer conn.Close()
-	reader := bufio.NewReader(conn)
+	scanner := bufio.NewScanner(conn)
 
-	msg, err := reader.ReadString('\n')
-	if err != nil {
-		return err
+	for scanner.Scan() {
+		msg := scanner.Text()
+		fmt.Println(msg)
+		_, err = io.WriteString(conn, msg+"\n")
 	}
 
-	if _, err = io.WriteString(conn, msg+"\n"); err != nil {
-		return err
-	}
-
-	return nil
-
+	return
 	// TODO accept incoming events and respond to them appropriately
 }
