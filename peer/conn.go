@@ -67,7 +67,7 @@ mainloop:
 				continue
 			}
 
-			if err = Get(conn, parts[1]); err != nil {
+			if err = get(conn, parts[1]); err != nil {
 				return err
 			}
 		case "share":
@@ -76,16 +76,16 @@ mainloop:
 				continue
 			}
 
-			if err = Share(conn, parts[1]); err != nil {
+			if err = share(conn, parts[1]); err != nil {
 				return err
 			}
 			fmt.Println("OK")
 		case "ls":
-			if err = Ls(conn); err != nil {
+			if err = ls(conn); err != nil {
 				return err
 			}
 		case "help":
-			PrintHelp()
+			printHelp()
 		case "quit":
 			break mainloop
 		default:

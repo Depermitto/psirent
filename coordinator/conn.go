@@ -71,10 +71,9 @@ func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
 		case "get":
 			panic("unimplemented") // TODO
 		case "share":
-			if err := HandleShare(vault, conn, parts[1]); err != nil {
+			if err := handleShare(vault, conn, parts[1]); err != nil {
 				return err
 			}
-			log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
 		case "ls":
 			panic("unimplemented") // TODO
 		}

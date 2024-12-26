@@ -2,7 +2,7 @@ package peer
 
 import "fmt"
 
-func PrintHelp() {
+func printHelp() {
 	fmt.Println("Commands: ")
 
 	fmt.Println("  get <filehash>")

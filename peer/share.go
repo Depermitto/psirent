@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-func Share(rw io.ReadWriter, filepath string) error {
+func share(rw io.ReadWriter, filepath string) error {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		fmt.Printf("could not open file at %v (%v)\n", filepath, err)
