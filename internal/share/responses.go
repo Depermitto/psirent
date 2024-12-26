@@ -3,7 +3,8 @@ package share
 type Response = string
 
 const (
-	FileShared    = "OK"
-	FileNotShared = "NO"
-	FileDuplicate = "DU"
+	ResponseLength = 2
+	FileShared     = "OK"
+	FileNotShared  = "NO"
+	FileDuplicate  = "DU"
 )

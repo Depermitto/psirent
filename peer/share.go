@@ -18,7 +18,7 @@ func handleShare(rw io.ReadWriter, filepath string) error {
 	if _, err = fmt.Fprintf(rw, "SHARE:%v\n", hex.EncodeToString(filehash[:])); err != nil {
 		return err
 	}
-	response := make([]byte, 2)
+	response := make([]byte, share.ResponseLength)
 	if _, err = io.ReadFull(rw, response); err != nil {
 		return err
 	}
