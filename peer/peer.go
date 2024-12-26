@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/peterh/liner"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/share"
 	"io"
 	"log"
 	"net"
@@ -13,7 +14,7 @@ import (
 
 const history = ".history"
 
-var commands = [5]string{"get", "share", "ls", "help", "quit"}
+var commands = [5]string{"handleGet", "share", "handleLs", "help", "quit"}
 
 func Connect(addr string) error {
 	conn, err := net.Dial("tcp4", addr)
@@ -61,13 +62,13 @@ mainloop:
 
 		parts := strings.Split(strings.TrimSpace(cmd), " ")
 		switch parts[0] {
-		case "get":
+		case "handleGet":
 			if len(parts) < 2 {
 				fmt.Println("required positional argument <filehash> is missing")
 				continue
 			}
 
-			if err = get(conn, parts[1]); err != nil {
+			if err = handleGet(conn, parts[1]); err != nil {
 				return err
 			}
 		case "share":
@@ -76,12 +77,17 @@ mainloop:
 				continue
 			}
 
-			if err = share(conn, parts[1]); err != nil {
+			if err = handleShare(conn, parts[1]); errors.Is(err, os.ErrNotExist) {
+				fmt.Printf("inexistant file %v\n", parts[1])
+			} else if errors.Is(err, share.ErrDuplicate) {
+				fmt.Println("already shared")
+			} else if err != nil {
 				return err
+			} else {
+				fmt.Println(share.FileShared)
 			}
-			fmt.Println("OK")
-		case "ls":
-			if err = ls(conn); err != nil {
+		case "handleLs":
+			if err = handleLs(conn); err != nil {
 				return err
 			}
 		case "help":

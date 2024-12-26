@@ -2,10 +2,13 @@ package coordinator
 
 import (
 	"bufio"
+	"errors"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/share"
 	"io"
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"strings"
 )
 
@@ -47,11 +50,16 @@ func CreateNetwork(addr string) error {
 		close(stop)
 	}()
 
+	forceStop := make(chan os.Signal, 1)
+	signal.Notify(forceStop, os.Interrupt)
 mainloop:
 	for {
 		select {
-		case <-stop:
+		case <-forceStop:
 			log.Println("stopping services...")
+			break mainloop
+		case <-stop:
+			log.Println("gracefully stopping services...")
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
@@ -71,7 +79,9 @@ func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
 		case "get":
 			panic("unimplemented") // TODO
 		case "share":
-			if err := handleShare(vault, conn, parts[1]); err != nil {
+			if err := handleShare(vault, conn, parts[1]); err == nil {
+				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
+			} else if !errors.Is(err, share.ErrDuplicate) {
 				return err
 			}
 		case "ls":
