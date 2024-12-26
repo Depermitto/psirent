@@ -14,7 +14,7 @@ import (
 
 const history = ".history"
 
-var commands = [5]string{"handleGet", "share", "handleLs", "help", "quit"}
+var commands = [5]string{"get", "share", "ls", "help", "quit"}
 
 func Connect(addr string) error {
 	conn, err := net.Dial("tcp4", addr)
@@ -62,7 +62,7 @@ mainloop:
 
 		parts := strings.Split(strings.TrimSpace(cmd), " ")
 		switch parts[0] {
-		case "handleGet":
+		case "get":
 			if len(parts) < 2 {
 				fmt.Println("required positional argument <filehash> is missing")
 				continue
@@ -86,7 +86,7 @@ mainloop:
 			} else {
 				fmt.Println(share.FileShared)
 			}
-		case "handleLs":
+		case "ls":
 			if err = handleLs(conn); err != nil {
 				return err
 			}
