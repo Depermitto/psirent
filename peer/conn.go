@@ -49,11 +49,11 @@ func Connect(addr string) error {
 		}()
 	}
 
-appLoop:
+mainloop:
 	for {
 		cmd, err := l.Prompt("psirent> ")
 		if errors.Is(err, io.EOF) {
-			break appLoop
+			break mainloop
 		} else if err != nil {
 			return err
 		}
@@ -79,6 +79,7 @@ appLoop:
 			if err = Share(conn, parts[1]); err != nil {
 				return err
 			}
+			fmt.Println("OK")
 		case "ls":
 			if err = Ls(conn); err != nil {
 				return err
@@ -86,7 +87,7 @@ appLoop:
 		case "help":
 			PrintHelp()
 		case "quit":
-			break appLoop
+			break mainloop
 		default:
 			fmt.Printf("unknown commad %v, please check the help command for available actions\n", cmd)
 		}
