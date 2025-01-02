@@ -24,7 +24,7 @@ func main() {
 		fmt.Fprintln(flag.CommandLine.Output(), "  create-network")
 		fmt.Fprintf(flag.CommandLine.Output(), "    \tact as the network coordinator\n")
 		fmt.Fprintln(flag.CommandLine.Output(), "  connect")
-		fmt.Fprintf(flag.CommandLine.Output(), "    \tact as a peer. Download and share files\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "    \tact as a peer\n")
 
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags: ")
 		flag.PrintDefaults()

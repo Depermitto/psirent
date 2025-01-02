@@ -3,16 +3,17 @@ package coordinator
 import (
 	"bufio"
 	"errors"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/share"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/common"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 )
 
-const storage = "storage.json"
+const storage = "coordinator/storage.json"
 
 func CreateNetwork(addr string) error {
 	// Set up the server
@@ -81,7 +82,7 @@ func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
 		case "share":
 			if err := handleShare(vault, conn, parts[1]); err == nil {
 				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
-			} else if !errors.Is(err, share.ErrDuplicate) {
+			} else if !errors.Is(err, common.ErrDuplicate) {
 				return err
 			}
 		case "ls":
@@ -90,4 +91,26 @@ func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
 	}
 	log.Printf("peer %v disconnected\n", conn.RemoteAddr())
 	return nil
+}
+
+func handleShare(vault map[string][]string, conn net.Conn, filehash string) error {
+	// We can assume we operate on IPv4
+	addr := conn.RemoteAddr().String()
+	if len(addr) == 0 {
+		if _, err := io.WriteString(conn, common.FileNotShared); err != nil {
+			return err
+		}
+		return common.ErrInvalidAddr
+	}
+
+	host := strings.Split(addr, ":")[0]
+	if slices.Contains(vault[filehash], host) {
+		if _, err := io.WriteString(conn, common.FileDuplicate); err != nil {
+			return err
+		}
+		return common.ErrDuplicate
+	}
+	vault[filehash] = append(vault[filehash], host)
+	_, err := io.WriteString(conn, common.FileShared)
+	return err
 }
