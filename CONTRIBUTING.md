@@ -48,4 +48,9 @@ This document outlines our practices in the codebase.
 
 ### internal/coms
 
-use the internal/coms package to share utility functions and abstractions between the **coordinator** and **peers**.
+Use the internal/coms package to share utility functions and abstractions between the **coordinator** and **peers**.
+
+### Buffers
+
+Always read/write strings as if they were delimited with a newline. Do **NOT** read arbitrary amount of bytes from a
+buffer.
