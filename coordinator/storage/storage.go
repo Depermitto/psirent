@@ -1,4 +1,4 @@
-package coordinator
+package storage
 
 import (
 	"encoding/json"
@@ -7,10 +7,12 @@ import (
 	"os"
 )
 
-func readPersistentStorage(path string) (vault map[string][]string, err error) {
+type Storage = map[string][]string
+
+func Read(path string) (s Storage, err error) {
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
-		return make(map[string][]string), nil
+		return make(Storage), nil
 	} else if err != nil {
 		return nil, err
 	}
@@ -19,14 +21,14 @@ func readPersistentStorage(path string) (vault map[string][]string, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = json.Unmarshal(bytes, &vault); err != nil {
+	if err = json.Unmarshal(bytes, &s); err != nil {
 		return nil, err
 	}
 	return
 }
 
-func savePersistentStorage(filemap map[string][]string, path string) error {
-	bytes, err := json.MarshalIndent(filemap, "", "    ")
+func Save(s Storage, path string) error {
+	bytes, err := json.MarshalIndent(s, "", "    ")
 	if err != nil {
 		return err
 	}

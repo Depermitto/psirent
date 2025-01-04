@@ -1,30 +1,44 @@
 package peer
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/peterh/liner"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/common"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/peer/send"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 const history = "peer/.history"
 
 var commands = [5]string{"get", "share", "ls", "help", "quit"}
 
-func Connect(addr string) error {
+func Connect(addr string, peerListenAddr string) error {
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
 		log.Fatalf("error connecting to %v (%v) \n", addr, err)
 	}
 	defer conn.Close()
 	fmt.Printf("connected to %v\n", conn.RemoteAddr())
+
+	listener, err := net.Listen("tcp4", peerListenAddr)
+	if err != nil {
+		log.Fatalf("error creating a network on %v (%v) \n", peerListenAddr, err)
+	}
+	defer listener.Close()
+
+	go func() {
+		for {
+			serverConn, _ := listener.Accept()
+			time.Sleep(100 * time.Millisecond)
+			serverConn.Close()
+		}
+	}()
 
 	// Setting up the user interface
 	l := liner.NewLiner()
@@ -70,30 +84,38 @@ mainloop:
 				continue
 			}
 
-			if err = get(conn, parts[1]); err != nil {
-				return err
-			}
+			panic("unimplemented") // TODO
 		case "share":
 			if len(parts) < 2 {
 				fmt.Println("required positional argument <filepath> is missing")
 				continue
 			}
 
-			if err = share(conn, parts[1]); errors.Is(err, os.ErrNotExist) {
-				fmt.Printf("inexistant file %v\n", parts[1])
-			} else if errors.Is(err, common.ErrDuplicate) {
+			if err = send.Share(conn, parts[1]); errors.Is(err, os.ErrNotExist) {
+				fmt.Printf("nonexistant file %v\n", parts[1])
+			} else if errors.Is(err, errors2.ErrShareDuplicate) {
 				fmt.Println("already shared")
 			} else if err != nil {
 				return err
-			} else {
-				fmt.Println(common.FileShared)
 			}
 		case "ls":
-			if err = ls(conn); err != nil {
-				return err
+			if filehashes, err := send.Ls(conn); err == nil {
+				fmt.Println(filehashes)
 			}
 		case "help":
-			printHelp()
+			fmt.Println("Commands: ")
+
+			fmt.Println("  get <filehash>")
+			fmt.Printf("    \tdownload a file from the network\n")
+
+			fmt.Println("  share <filepath>")
+			fmt.Printf("    \tdeclare a file is available for download and share them with other users\n")
+
+			fmt.Println("  ls")
+			fmt.Printf("    \tList files available for download\n")
+
+			fmt.Println("  quit")
+			fmt.Printf("    \tkill the conneciton and exit the network\n")
 		case "quit":
 			break mainloop
 		default:
@@ -101,50 +123,4 @@ mainloop:
 		}
 	}
 	return nil
-}
-
-func get(readWriter io.ReadWriter, filehash string) error {
-	panic("unimplemented") // TODO
-}
-
-func ls(readWriter io.ReadWriter) error {
-	panic("unimplemented") // TODO
-}
-
-func share(rw io.ReadWriter, filepath string) error {
-	data, err := os.ReadFile(filepath)
-	if err != nil {
-		return err
-	}
-	filehash := sha256.Sum256(data)
-	if _, err = fmt.Fprintf(rw, "SHARE:%v\n", hex.EncodeToString(filehash[:])); err != nil {
-		return err
-	}
-	response := make([]byte, common.ResponseLength)
-	if _, err = io.ReadFull(rw, response); err != nil {
-		return err
-	}
-
-	if string(response) == common.FileDuplicate {
-		return common.ErrDuplicate
-	} else if string(response) == common.FileShared {
-		return nil
-	}
-	return common.ErrFileNotShared
-}
-
-func printHelp() {
-	fmt.Println("Commands: ")
-
-	fmt.Println("  get <filehash>")
-	fmt.Printf("    \tdownload a file from the network\n")
-
-	fmt.Println("  share <filepath>")
-	fmt.Printf("    \tdeclare a file is available for download and share them with other users\n")
-
-	fmt.Println("  ls")
-	fmt.Printf("    \tList files available for download\n")
-
-	fmt.Println("  quit")
-	fmt.Printf("    \tkill the conneciton and exit the network\n")
 }

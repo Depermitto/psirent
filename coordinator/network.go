@@ -3,19 +3,21 @@ package coordinator
 import (
 	"bufio"
 	"errors"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/common"
+	"fmt"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator/receive"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator/storage"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	"slices"
 	"strings"
 )
 
-const storage = "coordinator/storage.json"
+const storagePath = "coordinator/storage.json"
 
-func CreateNetwork(addr string) error {
+func CreateNetwork(addr string, peerListenAddr string) error {
 	// Set up the server
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
@@ -25,13 +27,13 @@ func CreateNetwork(addr string) error {
 	log.Println("network created, listening for remote connections...")
 
 	// Read from persistent storage
-	vault, err := readPersistentStorage(storage)
+	s, err := storage.Read(storagePath)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	defer savePersistentStorage(vault, storage)
-	log.Printf("storage read, %v available files...\n", len(vault))
+	defer storage.Save(s, storagePath)
+	log.Printf("storage read, %v available files...\n", len(s))
 
 	// Await peer connections
 	conns := make(chan net.Conn)
@@ -64,13 +66,13 @@ mainloop:
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
-			go handlePeerConnection(vault, conn)
+			go handlePeerConnection(conn, s, peerListenAddr)
 		}
 	}
 	return nil
 }
 
-func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
+func handlePeerConnection(conn net.Conn, s storage.Storage, peerListenAddr string) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -80,37 +82,17 @@ func handlePeerConnection(vault map[string][]string, conn net.Conn) error {
 		case "get":
 			panic("unimplemented") // TODO
 		case "share":
-			if err := handleShare(vault, conn, parts[1]); err == nil {
+			if err := receive.Share(conn, s, parts[1], peerListenAddr); err == nil {
 				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
-			} else if !errors.Is(err, common.ErrDuplicate) {
+			} else if !errors.Is(err, errors2.ErrShareDuplicate) {
 				return err
 			}
 		case "ls":
-			panic("unimplemented") // TODO
+			if available, err := receive.Ls(conn, s); err == nil {
+				fmt.Printf("%v available files\n", available)
+			}
 		}
 	}
 	log.Printf("peer %v disconnected\n", conn.RemoteAddr())
 	return nil
-}
-
-func handleShare(vault map[string][]string, conn net.Conn, filehash string) error {
-	// We can assume we operate on IPv4
-	addr := conn.RemoteAddr().String()
-	if len(addr) == 0 {
-		if _, err := io.WriteString(conn, common.FileNotShared); err != nil {
-			return err
-		}
-		return common.ErrInvalidAddr
-	}
-
-	host := strings.Split(addr, ":")[0]
-	if slices.Contains(vault[filehash], host) {
-		if _, err := io.WriteString(conn, common.FileDuplicate); err != nil {
-			return err
-		}
-		return common.ErrDuplicate
-	}
-	vault[filehash] = append(vault[filehash], host)
-	_, err := io.WriteString(conn, common.FileShared)
-	return err
 }

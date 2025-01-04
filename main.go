@@ -31,14 +31,17 @@ func main() {
 	}
 
 	host := flag.String("host", "localhost", "host to connect to/listen on")
-	port := flag.String("port", "6000", "port on the machine")
+	port := flag.Uint("port", 6000, "port on the machine")
 	flag.Parse()
+
+	addr := fmt.Sprintf("%v:%v", *host, *port)
+	peerListenAddr := fmt.Sprintf("%v:%v", *host, *port+1)
 
 	command := os.Args[1]
 	if command == "create-network" {
-		_ = coordinator.CreateNetwork(*host + ":" + *port)
+		_ = coordinator.CreateNetwork(addr, peerListenAddr)
 	} else if command == "connect" {
-		err := peer.Connect(*host + ":" + *port)
+		err := peer.Connect(addr, peerListenAddr)
 		if errors.Is(err, syscall.EPIPE) {
 			fmt.Println("host disconnected, closing connection...")
 		} else if err != nil {
