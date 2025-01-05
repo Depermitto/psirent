@@ -21,12 +21,7 @@ func Ls(pw io.Writer, storage persistent.Storage) (int, error) {
 					_, _ = bufpw.WriteString(filehash)
 					available += 1
 				} else {
-					storage[filehash][i] = storage[filehash][len(storage[filehash])-1]
-					storage[filehash] = storage[filehash][:len(storage[filehash])-1]
-
-					if len(storage[filehash]) == 0 {
-						delete(storage, filehash)
-					}
+					persistent.Remove(storage, filehash, i)
 				}
 				conn.Close()
 			}

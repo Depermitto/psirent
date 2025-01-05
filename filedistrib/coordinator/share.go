@@ -10,18 +10,12 @@ import (
 )
 
 func Share(pw io.Writer, storage persistent.Storage, filehash string, peerListenAddr string) error {
-	// We can assume we operate on IPv4
 	if len(peerListenAddr) == 0 {
-		if _, err := fmt.Fprintln(pw, coms.ShareNotOk); err != nil {
-			return err
-		}
+		_, _ = fmt.Fprintln(pw, coms.ShareNotOk)
 		return errors2.ErrInvalidAddr
 	}
-
 	if slices.Contains(storage[filehash], peerListenAddr) {
-		if _, err := fmt.Fprintln(pw, coms.ShareDuplicate); err != nil {
-			return err
-		}
+		_, _ = fmt.Fprintln(pw, coms.ShareDuplicate)
 		return errors2.ErrShareDuplicate
 	}
 	storage[filehash] = append(storage[filehash], peerListenAddr)

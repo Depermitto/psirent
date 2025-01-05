@@ -13,12 +13,7 @@ func Has(cw io.Writer, storage persistent.Storage, filehash string) {
 	if ok && len(filepaths) > 0 {
 		for i, filepath := range filepaths {
 			if _, err := os.Stat(filepath); os.IsNotExist(err) {
-				storage[filehash][i] = storage[filehash][len(storage[filehash])-1]
-				storage[filehash] = storage[filehash][:len(storage[filehash])-1]
-
-				if len(storage[filehash]) == 0 {
-					delete(storage, filehash)
-				}
+				persistent.Remove(storage, filehash, i)
 			} else if err == nil {
 				fmt.Fprintln(cw, coms.HasOk)
 				return
