@@ -1,24 +1,29 @@
-package peer
+package filedistrib
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"github.com/peterh/liner"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/peer/send"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
-	"time"
 )
 
-const history = "peer/.history"
+const (
+	peerHistoryPath = ".history"
+	sharedFilesPath = "filedistrib/peer/storage.json"
+)
 
 var commands = [5]string{"get", "share", "ls", "help", "quit"}
 
 func Connect(addr string, peerListenAddr string) error {
+	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
 		log.Fatalf("error connecting to %v (%v) \n", addr, err)
@@ -26,17 +31,28 @@ func Connect(addr string, peerListenAddr string) error {
 	defer conn.Close()
 	fmt.Printf("connected to %v\n", conn.RemoteAddr())
 
+	// Read from persistent storage
+	storage, err := persistent.Read(sharedFilesPath)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	defer persistent.Save(storage, sharedFilesPath)
+	log.Printf("storage read, %v available files...\n", len(storage))
+
+	// Listen for messages from the coordinator or other peers
 	listener, err := net.Listen("tcp4", peerListenAddr)
 	if err != nil {
 		log.Fatalf("error creating a network on %v (%v) \n", peerListenAddr, err)
 	}
 	defer listener.Close()
 
+	// Await message connections
 	go func() {
 		for {
-			serverConn, _ := listener.Accept()
-			time.Sleep(100 * time.Millisecond)
-			serverConn.Close()
+			if msgConn, err := listener.Accept(); err == nil {
+				go handleIncomingConnection(msgConn, storage)
+			}
 		}
 	}()
 
@@ -54,18 +70,22 @@ func Connect(addr string, peerListenAddr string) error {
 			}
 			return
 		})
-		if f, err := os.Open(history); err == nil {
+		if f, err := os.Open(peerHistoryPath); err == nil {
 			l.ReadHistory(f)
 			f.Close()
 		}
 		defer func() {
-			if f, err := os.Create(history); err == nil {
+			if f, err := os.Create(peerHistoryPath); err == nil {
 				l.WriteHistory(f)
 				f.Close()
 			}
 		}()
 	}
+	// Contains app loop
+	return handleOutgoingConnection(conn, storage, l)
+}
 
+func handleOutgoingConnection(conn net.Conn, storage persistent.Storage, l *liner.State) error {
 mainloop:
 	for {
 		cmd, err := l.Prompt("psirent> ")
@@ -91,15 +111,19 @@ mainloop:
 				continue
 			}
 
-			if err = send.Share(conn, parts[1]); errors.Is(err, os.ErrNotExist) {
-				fmt.Printf("nonexistant file %v\n", parts[1])
+			filepath := parts[1]
+			filehash, err := peer.Share(conn, filepath)
+			if os.IsNotExist(err) {
+				fmt.Printf("nonexistant file %v\n", filepath)
 			} else if errors.Is(err, errors2.ErrShareDuplicate) {
 				fmt.Println("already shared")
 			} else if err != nil {
 				return err
+			} else {
+				storage[filehash] = append(storage[filehash], filepath)
 			}
 		case "ls":
-			if filehashes, err := send.Ls(conn); err == nil {
+			if filehashes, err := peer.Ls(conn); err == nil {
 				fmt.Println(filehashes)
 			}
 		case "help":
@@ -120,6 +144,20 @@ mainloop:
 			break mainloop
 		default:
 			fmt.Printf("unknown commad %v, please check the help command for available actions\n", cmd)
+		}
+	}
+	return nil
+}
+
+func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
+	defer conn.Close()
+	scanner := bufio.NewScanner(conn)
+	for scanner.Scan() {
+		// WARNING: Assume the other side is always sending correct requests!!
+		parts := strings.Split(strings.TrimSpace(scanner.Text()), ":")
+		switch strings.ToLower(parts[0]) {
+		case "has":
+			peer.Has(conn, storage, parts[1])
 		}
 	}
 	return nil

@@ -4,8 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/peer"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib"
 	"os"
 	"syscall"
 )
@@ -39,9 +38,9 @@ func main() {
 
 	command := os.Args[1]
 	if command == "create-network" {
-		_ = coordinator.CreateNetwork(addr, peerListenAddr)
+		_ = filedistrib.CreateNetwork(addr, peerListenAddr)
 	} else if command == "connect" {
-		err := peer.Connect(addr, peerListenAddr)
+		err := filedistrib.Connect(addr, peerListenAddr)
 		if errors.Is(err, syscall.EPIPE) {
 			fmt.Println("host disconnected, closing connection...")
 		} else if err != nil {

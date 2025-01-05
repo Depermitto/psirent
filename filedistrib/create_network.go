@@ -1,11 +1,11 @@
-package coordinator
+package filedistrib
 
 import (
 	"bufio"
 	"errors"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator/receive"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/coordinator/storage"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"log"
@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-const storagePath = "coordinator/storage.json"
+const storagePath = "filedistrib/coordinator/storage.json"
 
 func CreateNetwork(addr string, peerListenAddr string) error {
 	// Set up the server
@@ -27,13 +27,13 @@ func CreateNetwork(addr string, peerListenAddr string) error {
 	log.Println("network created, listening for remote connections...")
 
 	// Read from persistent storage
-	s, err := storage.Read(storagePath)
+	storage, err := persistent.Read(storagePath)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	defer storage.Save(s, storagePath)
-	log.Printf("storage read, %v available files...\n", len(s))
+	defer persistent.Save(storage, storagePath)
+	log.Printf("storage read, %v available files...\n", len(storage))
 
 	// Await peer connections
 	conns := make(chan net.Conn)
@@ -66,29 +66,29 @@ mainloop:
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
-			go handlePeerConnection(conn, s, peerListenAddr)
+			go handlePeerConnection(conn, storage, peerListenAddr)
 		}
 	}
 	return nil
 }
 
-func handlePeerConnection(conn net.Conn, s storage.Storage, peerListenAddr string) error {
+func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenAddr string) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
-		// WARNING: Assume the client is always sending correct requests!!
+		// WARNING: Assume the other side is always sending correct requests!!
 		parts := strings.Split(strings.TrimSpace(scanner.Text()), ":")
 		switch strings.ToLower(parts[0]) {
 		case "get":
 			panic("unimplemented") // TODO
 		case "share":
-			if err := receive.Share(conn, s, parts[1], peerListenAddr); err == nil {
+			if err := coordinator.Share(conn, storage, parts[1], peerListenAddr); err == nil {
 				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
 			} else if !errors.Is(err, errors2.ErrShareDuplicate) {
 				return err
 			}
 		case "ls":
-			if available, err := receive.Ls(conn, s); err == nil {
+			if available, err := coordinator.Ls(conn, storage); err == nil {
 				fmt.Printf("%v available files\n", available)
 			}
 		}

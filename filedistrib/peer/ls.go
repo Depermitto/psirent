@@ -1,9 +1,9 @@
-package send
+package peer
 
 import (
 	"bufio"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/coms"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"strings"

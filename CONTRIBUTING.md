@@ -2,18 +2,6 @@
 
 This document outlines our practices in the codebase.
 
-## Folder Structure
-
-### **`peer/send/` Folder**
-
-- Use the `peer/send/` folder for implementing **peer-related functions**.
-- These functions define operations from the **peer's perspective** and handle interactions initiated by peers.
-
-### **`coordinator/receive/` Folder**
-
-- Use the `coordinator/receive/` folder for implementing **coordinator-related functions**.
-- These functions are answers to those in `peer/send/` folder from the **coordinator's perspective**.
-
 ## Naming Conventions
 
 ### **Importing `internal/errors`**
@@ -27,7 +15,7 @@ This document outlines our practices in the codebase.
   )
   // ...
 
-### `io.Readers` and `io.Writers`
+### `io` interfaces
 
 - Use *p* prefix before any of the `io` interfaces to denote a peer connection from the **coordinator's perspective**
   ```go
@@ -46,9 +34,9 @@ This document outlines our practices in the codebase.
 
 ## Communication Logic
 
-### internal/coms
+### filedistrib/coms
 
-Use the internal/coms package to share utility functions and abstractions between the **coordinator** and **peers**.
+Use the filedistrib/coms package to share utility functions and abstractions between the **coordinator** and **peers**.
 
 ### Buffers
 

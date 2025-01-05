@@ -1,4 +1,4 @@
-package storage
+package persistent
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 
 type Storage = map[string][]string
 
-func Read(path string) (s Storage, err error) {
+func Read(path string) (storage Storage, err error) {
 	file, err := os.Open(path)
 	if errors.Is(err, os.ErrNotExist) {
 		return make(Storage), nil
@@ -21,14 +21,14 @@ func Read(path string) (s Storage, err error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = json.Unmarshal(bytes, &s); err != nil {
+	if err = json.Unmarshal(bytes, &storage); err != nil {
 		return nil, err
 	}
 	return
 }
 
-func Save(s Storage, path string) error {
-	bytes, err := json.MarshalIndent(s, "", "    ")
+func Save(storage Storage, path string) error {
+	bytes, err := json.MarshalIndent(storage, "", "    ")
 	if err != nil {
 		return err
 	}
