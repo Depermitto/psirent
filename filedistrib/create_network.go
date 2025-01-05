@@ -24,7 +24,7 @@ func CreateNetwork(addr string, peerListenAddr string) error {
 		log.Fatalf("error creating a network on %v (%v) \n", addr, err)
 	}
 	defer listener.Close()
-	log.Println("network created, listening for remote connections...")
+	log.Printf("network created on %v, listening for remote connections...\n", addr)
 
 	// Read from persistent storage
 	storage, err := persistent.Read(storagePath)

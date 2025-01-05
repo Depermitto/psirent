@@ -47,11 +47,11 @@ func Connect(addr string, peerListenAddr string) error {
 	}
 	defer listener.Close()
 
-	// Await message connections
+	// Await coordinator/peer connections
 	go func() {
 		for {
-			if msgConn, err := listener.Accept(); err == nil {
-				go handleIncomingConnection(msgConn, storage)
+			if conn, err := listener.Accept(); err == nil {
+				go handleIncomingConnection(conn, storage)
 			}
 		}
 	}()
@@ -136,7 +136,7 @@ mainloop:
 			fmt.Printf("    \tdeclare a file is available for download and share them with other users\n")
 
 			fmt.Println("  ls")
-			fmt.Printf("    \tList files available for download\n")
+			fmt.Printf("    \tlist files available for download\n")
 
 			fmt.Println("  quit")
 			fmt.Printf("    \tkill the conneciton and exit the network\n")

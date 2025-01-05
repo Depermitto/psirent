@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Positional argument required, check -help for details")
-		os.Exit(1)
-	}
+	host := flag.String("host", "localhost", "host of the coordinator")
+	port := flag.Uint("port", 6000, "port the coordinator listens on")
+	peerListenHost := flag.String("host-peer", "localhost", "host of the peer")
+	peerListenPort := flag.Uint("port-peer", 6001, "port the peer listens on")
 
 	flag.Usage = func() {
 		// Tell your IDE to ignore these warnings, it is not worth checking them.
@@ -29,14 +29,16 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	host := flag.String("host", "localhost", "host to connect to/listen on")
-	port := flag.Uint("port", 6000, "port on the machine")
+	if len(os.Args) < 2 {
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	flag.Parse()
-
 	addr := fmt.Sprintf("%v:%v", *host, *port)
-	peerListenAddr := fmt.Sprintf("%v:%v", *host, *port+1)
+	peerListenAddr := fmt.Sprintf("%v:%v", *peerListenHost, *peerListenPort)
 
-	command := os.Args[1]
+	command := flag.Arg(0)
 	if command == "create-network" {
 		_ = filedistrib.CreateNetwork(addr, peerListenAddr)
 	} else if command == "connect" {
