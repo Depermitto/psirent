@@ -80,7 +80,12 @@ func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenA
 		parts := strings.Split(strings.TrimSpace(scanner.Text()), ":")
 		switch strings.ToLower(parts[0]) {
 		case "get":
-			panic("unimplemented") // TODO
+			if err := coordinator.Get(conn, storage, parts[1]); err == nil {
+				log.Printf("sent the list of peers with the file: %v to address: %v", parts[1], conn.RemoteAddr())
+			} else if !errors.Is(err, errors2.ErrGetFileNotShared) && !errors.Is(err, errors2.ErrGetNoPeerOnline) {
+				return err
+			}
+
 		case "share":
 			if err := coordinator.Share(conn, storage, parts[1], peerListenAddr); err == nil {
 				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])

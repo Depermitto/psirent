@@ -103,8 +103,15 @@ mainloop:
 				fmt.Println("required positional argument <filehash> is missing")
 				continue
 			}
-
-			panic("unimplemented") // TODO
+			filehash := parts[1]
+			err :=  peer.Get(conn, filehash)
+			if errors.Is(err, errors2.ErrGetFileNotShared){
+				fmt.Printf("no file found with the specified hash\n")
+			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
+				fmt.Println("no peers that have the requested file are reachable right now")
+			} else if err != nil {
+				return err
+			}
 		case "share":
 			if len(parts) < 2 {
 				fmt.Println("required positional argument <filepath> is missing")

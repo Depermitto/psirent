@@ -11,4 +11,7 @@ const (
 	LsSeparator = ";"
 	HasNotOk    = "HNF"
 	HasOk       = "HF"
+	
+	GetNotOK	= "GNO"
+	GetNoPeer   = "GNP"
 )
