@@ -104,8 +104,8 @@ mainloop:
 				continue
 			}
 			filehash := parts[1]
-			err :=  peer.Get(conn, filehash)
-			if errors.Is(err, errors2.ErrGetFileNotShared){
+			err := peer.Get(conn, filehash)
+			if errors.Is(err, errors2.ErrGetFileNotShared) {
 				fmt.Printf("no file found with the specified hash\n")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
 				fmt.Println("no peers that have the requested file are reachable right now")

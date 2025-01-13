@@ -10,7 +10,6 @@ import (
 )
 
 func Get(crw io.ReadWriter, filehash string) (err error) {
-
 	// Send
 	if _, err = fmt.Fprintf(crw, "GET:%v\n", filehash); err != nil {
 		return
@@ -23,7 +22,6 @@ func Get(crw io.ReadWriter, filehash string) (err error) {
 	}
 
 	response := scanner.Text()
-
 	if response == coms.GetNoPeer {
 		err = errors2.ErrGetNoPeerOnline
 	} else if response == coms.GetNotOK {
