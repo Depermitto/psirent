@@ -10,5 +10,7 @@ var (
 	ErrShareFileNotShared = errors.New("could not share the file")
 	ErrShareDuplicate     = errors.New("peer shared the same file")
 
-	ErrLsEmpty = errors.New("no files available for download")
+	ErrLsEmpty          = errors.New("no files available for download")
+	ErrGetFileNotShared = errors.New("no file with such filehash is shared")
+	ErrGetNoPeerOnline  = errors.New("no peers are reachable right now")
 )
