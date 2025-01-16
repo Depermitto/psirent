@@ -28,7 +28,7 @@ func Get(crw io.ReadWriter, filehash string) (err error) {
 		err = errors2.ErrGetFileNotShared
 	} else {
 		peerList := strings.Split(response, coms.LsSeparator)
-		fmt.Printf("Peers: %v\n", peerList) // // Temporary log
+		fmt.Printf("Peers: %v\n", peerList) // Temporary log
 		// TODO: Implement file download functionality
 	}
 	return

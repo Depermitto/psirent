@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/peterh/liner"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/peterh/liner"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 const (
@@ -121,9 +122,11 @@ mainloop:
 			filepath := parts[1]
 			filehash, err := peer.Share(conn, filepath)
 			if os.IsNotExist(err) {
-				fmt.Printf("nonexistant file %v\n", filepath)
+				fmt.Printf("file %v does not exist\n", filepath)
 			} else if errors.Is(err, errors2.ErrShareDuplicate) {
 				fmt.Println("already shared")
+			} else if _, isPathErr := err.(*os.PathError); isPathErr {
+				fmt.Println("can only share files, directories are not supported")
 			} else if err != nil {
 				return err
 			} else {
