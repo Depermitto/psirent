@@ -18,7 +18,7 @@ import (
 
 const (
 	peerHistoryPath = ".history"
-	sharedFilesPath = "filedistrib/peer/storage.json"
+	sharedFilesPath = "peer.json"
 )
 
 var commands = [5]string{"get", "share", "ls", "help", "quit"}

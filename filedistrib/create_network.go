@@ -15,7 +15,7 @@ import (
 	"strings"
 )
 
-const storagePath = "filedistrib/coordinator/storage.json"
+const storagePath = "coordinator.json"
 
 func CreateNetwork(addr string, peerListenAddr string) error {
 	// Set up the server

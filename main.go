@@ -10,10 +10,8 @@ import (
 )
 
 func main() {
-	host := flag.String("host", "localhost", "host of the coordinator")
-	port := flag.Uint("port", 6000, "port the coordinator listens on")
+	host := flag.String("host-coordinator", "localhost", "host of the coordinator")
 	peerListenHost := flag.String("host-peer", "localhost", "host of the peer")
-	peerListenPort := flag.Uint("port-peer", 6001, "port the peer listens on")
 
 	flag.Usage = func() {
 		// Tell your IDE to ignore these warnings, it is not worth checking them.
@@ -35,8 +33,8 @@ func main() {
 	}
 
 	flag.Parse()
-	addr := fmt.Sprintf("%v:%v", *host, *port)
-	peerListenAddr := fmt.Sprintf("%v:%v", *peerListenHost, *peerListenPort)
+	addr := fmt.Sprintf("%v:6000", *host)
+	peerListenAddr := fmt.Sprintf("%v:6001", *peerListenHost)
 
 	command := flag.Arg(0)
 	if command == "create-network" {
