@@ -11,17 +11,18 @@ import (
 
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 func HandleShare(conn io.ReadWriter, filepath string, storage persistent.Storage) (err error) {
 	filehash, err := Share(conn, filepath)
 	if os.IsNotExist(err) {
-		fmt.Printf("file %v does not exist\n", filepath)
+		fmt.Printf("%s file %v does not exist\n", constants.PEER_PREFIX, filepath)
 	} else if errors.Is(err, errors2.ErrShareDuplicate) {
-		fmt.Println("already shared")
+		fmt.Printf("%s You have already shared this file\n", constants.HOST_PREFIX)
 	} else if _, isPathErr := err.(*os.PathError); isPathErr {
-		fmt.Println("can only share files, directories are not supported")
+		fmt.Printf("%s You can only share files, directories are not supported.\n", constants.HOST_PREFIX)
 	} else if err != nil {
 		return err
 	} else {
@@ -31,7 +32,7 @@ func HandleShare(conn io.ReadWriter, filepath string, storage persistent.Storage
 }
 
 func Share(crw io.ReadWriter, filepath string) (filehash string, err error) {
-	fmt.Println("Sharing", filepath)
+	fmt.Println(constants.PEER_PREFIX, "Sharing", filepath, "...")
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return "", err

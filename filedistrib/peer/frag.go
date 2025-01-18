@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
@@ -79,6 +80,7 @@ func Fragment(cw io.Writer, storage persistent.Storage, fragNo int64, totalFragm
 			return
 		}
 		remaining -= int64(bytesRead)
+		time.Sleep(2 * time.Second)
 	}
 
 	if closer, ok := cw.(io.Closer); ok {

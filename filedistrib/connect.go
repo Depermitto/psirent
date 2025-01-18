@@ -15,6 +15,7 @@ import (
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
@@ -29,10 +30,10 @@ func Connect(addr string, peerListenAddr string) error {
 	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
-		log.Fatalf("error connecting to %v (%v) \n", addr, err)
+		log.Fatalf("%s Error connecting to %v (%v) \n", constants.PEER_PREFIX, addr, err)
 	}
 	defer conn.Close()
-	fmt.Printf("connected to %v\n", conn.RemoteAddr())
+	fmt.Printf("%s Connected to %v\n", constants.PEER_PREFIX, conn.RemoteAddr())
 
 	// Read from persistent storage
 	storage, err := persistent.Read(sharedFilesPath)
@@ -41,12 +42,12 @@ func Connect(addr string, peerListenAddr string) error {
 		return err
 	}
 	defer persistent.Save(storage, sharedFilesPath)
-	log.Printf("storage read, %v available files...\n", len(storage))
+	log.Printf("%s Storage read, %v files available...\n", constants.PEER_PREFIX, len(storage))
 
 	// Listen for messages from the coordinator or other peers
 	listener, err := net.Listen("tcp4", peerListenAddr)
 	if err != nil {
-		log.Fatalf("error creating a network on %v (%v) \n", peerListenAddr, err)
+		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PEER_PREFIX, peerListenAddr, err)
 	}
 	defer listener.Close()
 
@@ -91,7 +92,7 @@ func Connect(addr string, peerListenAddr string) error {
 func handleOutgoingConnection(conn net.Conn, storage persistent.Storage, l *liner.State) error {
 mainloop:
 	for {
-		cmd, err := l.Prompt("psirent> ")
+		cmd, err := l.Prompt("PSIrent> ")
 		if errors.Is(err, io.EOF) {
 			break mainloop
 		} else if err != nil {
@@ -103,21 +104,21 @@ mainloop:
 		switch parts[0] {
 		case "get":
 			if len(parts) < 2 {
-				fmt.Println("required positional argument <filehash> is missing")
+				fmt.Println(constants.PEER_PREFIX, "Required positional argument <filehash> is missing")
 				continue
 			}
 			filehash := parts[1]
 			err := peer.Get(conn, filehash, storage)
 			if errors.Is(err, errors2.ErrGetFileNotShared) {
-				fmt.Printf("no file found with the specified hash\n")
+				fmt.Println(constants.HOST_PREFIX, "No file found with the specified hash")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
-				fmt.Println("no peers that have the requested file are reachable right now")
+				fmt.Println(constants.HOST_PREFIX, "No peers that have the requested file are reachable right now")
 			} else if err != nil {
 				return err
 			}
 		case "share":
 			if len(parts) < 2 {
-				fmt.Println("required positional argument <filepath> is missing")
+				fmt.Println(constants.PEER_PREFIX, "Required positional argument <filepath> is missing")
 				continue
 			}
 
@@ -128,7 +129,7 @@ mainloop:
 			}
 		case "ls":
 			if filehashes, err := peer.Ls(conn); err == nil {
-				fmt.Printf("%d available files:", len(filehashes))
+				fmt.Printf("%s %d available files:", constants.HOST_PREFIX, len(filehashes))
 				for _, filehash := range filehashes {
 					fmt.Printf("\n  %v", filehash)
 				}

@@ -23,7 +23,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	defer waitGroup.Done()
 	conn, err := net.Dial("tcp", peer)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -31,7 +31,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 
 	// Send fragment request
 	if _, err = fmt.Fprintf(conn, "FRAG:%v:%v:%v\n", fragNo, totalFragments, filehash); err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -42,7 +42,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Read filename
 	fname, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -56,24 +56,24 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	status, err := reader.ReadString('\n')
 	// Check if an error occurred
 	if err != nil && err != io.EOF {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
 	msg := strings.TrimSuffix(status, "\n")
 	var expectedSize int
 	if msg == coms.FragEmpty {
-		fmt.Printf("Fragment %d is empty\n", fragNo)
+		fmt.Printf("%s Fragment %d is empty\n", constants.PEER_PREFIX, fragNo)
 		emptyFrags <- fragNo // mark as empty
 		return
 	} else if msg == coms.FragNotOk {
-		fmt.Printf("Fragment %d is not ok\n", fragNo)
+		fmt.Printf("%s Fragment %d is not ok\n", constants.PEER_PREFIX, fragNo)
 		results <- fragNo // mark as failed
 		return
 	} else { // assume that status contains file size
 		expectedSize, err = strconv.Atoi(msg)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(constants.PEER_PREFIX, err)
 			results <- fragNo // mark as failed
 			return
 		}
@@ -82,7 +82,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Save fragment
 	file, err := os.Create(fmt.Sprintf("%s.frag%d", filehash, fragNo))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -96,13 +96,13 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 			if err == io.EOF {
 				break // End of file, stop reading
 			}
-			fmt.Println(err)
+			fmt.Println(constants.PEER_PREFIX, err)
 			results <- fragNo // mark as failed
 			return            // Handle other errors
 		}
 		if bytesRead > 0 {
 			if _, writeErr := file.Write(buffer[:bytesRead]); writeErr != nil {
-				fmt.Println(writeErr)
+				fmt.Println(constants.PEER_PREFIX, writeErr)
 				results <- fragNo // mark as failed
 				return
 			}
@@ -111,23 +111,23 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Check if the fragment size matches the expected size
 	fileInfo, err := file.Stat()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		results <- fragNo // mark as failed
 		return
 	}
 	if fileInfo.Size() != int64(expectedSize) {
-		fmt.Printf("Fragment %d incomplete(%d vs %d)\n", fragNo, fileInfo.Size(), expectedSize)
+		fmt.Printf("%s Fragment %d incomplete(%d vs %d)\n", constants.PEER_PREFIX, fragNo, fileInfo.Size(), expectedSize)
 		results <- fragNo // mark as failed
 		return
 	}
-	fmt.Printf("Fragment %d saved\n", fragNo)
+	fmt.Printf("%s Fragment %d saved\n", constants.PEER_PREFIX, fragNo)
 }
 
 func removeFragments(filehash string) {
 	// Read the current directory
 	files, err := os.ReadDir(".")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(constants.PEER_PREFIX, err)
 		return
 	}
 	// Remove fragments
@@ -135,7 +135,7 @@ func removeFragments(filehash string) {
 		if strings.HasPrefix(file.Name(), filehash+".frag") {
 			err = os.Remove(file.Name())
 			if err != nil {
-				fmt.Println(err)
+				fmt.Println(constants.PEER_PREFIX, err)
 			}
 		}
 	}
@@ -222,7 +222,7 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 		}
 
 		// Retry failed fragments
-		fmt.Printf("Retrying failed fragments: %v\n", failedFragments)
+		fmt.Printf("%s Retrying failed fragments: %v\n", constants.PEER_PREFIX, failedFragments)
 	}
 
 	// Check if the result folder exists and create it if not
@@ -237,13 +237,12 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 	fmt.Printf("Reassembling the file %v...\n", filename)
 	// Check if filename was set
 	if filename == "" {
-		err = fmt.Errorf("filename was not set by any peer")
+		err = fmt.Errorf("%s Filename was not set by any peer", constants.PEER_PREFIX)
 		return
 	}
 	filename = "received/" + filename
 	file, err := os.Create(filename)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	defer file.Close()
@@ -251,7 +250,7 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 	for i := 1; i <= totalFragments; i++ {
 		// Check if fragment is marked as empty
 		if _, ok := emptyFragSet[i]; ok {
-			fmt.Printf("Skipping empty fragment %d\n", i)
+			fmt.Printf("%s Skipping empty fragment %d\n", constants.PEER_PREFIX, i)
 			continue
 		}
 		// Open fragment
@@ -271,8 +270,8 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 			return err
 		}
 	}
-	fmt.Println("File reassembled!")
-	fmt.Println("Sharing the file...")
+	fmt.Println(constants.PEER_PREFIX, "File reassembled!")
+	fmt.Println(constants.PEER_PREFIX, "Sharing the file...")
 	// Share the file
 	err = HandleShare(crw, filename, storage)
 	if err != nil {
