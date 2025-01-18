@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -60,6 +61,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 		return
 	}
 	msg := strings.TrimSuffix(status, "\n")
+	var expectedSize int
 	if msg == coms.FragEmpty {
 		fmt.Printf("Fragment %d is empty\n", fragNo)
 		emptyFrags <- fragNo // mark as empty
@@ -68,7 +70,14 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 		fmt.Printf("Fragment %d is not ok\n", fragNo)
 		results <- fragNo // mark as failed
 		return
-	} // else assume that status is just file content, will be written to file
+	} else { // assume that status contains file size
+		expectedSize, err = strconv.Atoi(msg)
+		if err != nil {
+			fmt.Println(err)
+			results <- fragNo // mark as failed
+			return
+		}
+	}
 
 	// Save fragment
 	file, err := os.Create(fmt.Sprintf("%s.frag%d", filehash, fragNo))
@@ -80,7 +89,6 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	defer file.Close()
 
 	// Read and save the fragment
-	file.Write([]byte(status))
 	buffer := make([]byte, constants.FILE_CHUNK)
 	for {
 		bytesRead, err := reader.Read(buffer)
@@ -99,6 +107,18 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 				return
 			}
 		}
+	}
+	// Check if the fragment size matches the expected size
+	fileInfo, err := file.Stat()
+	if err != nil {
+		fmt.Println(err)
+		results <- fragNo // mark as failed
+		return
+	}
+	if fileInfo.Size() != int64(expectedSize) {
+		fmt.Printf("Fragment %d incomplete(%d vs %d)\n", fragNo, fileInfo.Size(), expectedSize)
+		results <- fragNo // mark as failed
+		return
 	}
 	fmt.Printf("Fragment %d saved\n", fragNo)
 }
@@ -127,6 +147,8 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 		response := scanner.Text()
 		if response == coms.GetNoPeer {
 			err = errors2.ErrGetNoPeerOnline
+			// Check for fragments and remove them
+			
 			return
 		} else if response == coms.GetNotOK {
 			err = errors2.ErrGetFileNotShared
