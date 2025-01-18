@@ -4,15 +4,16 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"strings"
+
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 const storagePath = "filedistrib/coordinator/storage.json"
@@ -66,7 +67,7 @@ mainloop:
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
-			go handlePeerConnection(conn, storage, peerListenAddr)
+			go handlePeerConnection(conn, storage, peerListenAddr) //@TODO: peerListenAddr is wrong, remove it and get address somewhere else
 		}
 	}
 	return nil

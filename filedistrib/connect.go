@@ -45,6 +45,7 @@ func Connect(addr string, peerListenAddr string) error {
 	log.Printf("%s Storage read, %v files available...\n", constants.PEER_PREFIX, len(storage))
 
 	// Listen for messages from the coordinator or other peers
+	// @TODO: Limit the number of connections to constants.MAX_ADDR_NUM
 	listener, err := net.Listen("tcp4", peerListenAddr)
 	if err != nil {
 		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PEER_PREFIX, peerListenAddr, err)
