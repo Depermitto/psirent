@@ -123,6 +123,24 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	fmt.Printf("Fragment %d saved\n", fragNo)
 }
 
+func removeFragments(filehash string) {
+	// Read the current directory
+	files, err := os.ReadDir(".")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// Remove fragments
+	for _, file := range files {
+		if strings.HasPrefix(file.Name(), filehash+".frag") {
+			err = os.Remove(file.Name())
+			if err != nil {
+				fmt.Println(err)
+			}
+		}
+	}
+}
+
 func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err error) {
 	// Reset filename
 	filename = ""
@@ -148,7 +166,7 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 		if response == coms.GetNoPeer {
 			err = errors2.ErrGetNoPeerOnline
 			// Check for fragments and remove them
-			
+			removeFragments(filehash)
 			return
 		} else if response == coms.GetNotOK {
 			err = errors2.ErrGetFileNotShared
