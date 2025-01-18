@@ -79,6 +79,6 @@ func Fragment(cw io.Writer, storage persistent.Storage, fragNo int64, totalFragm
 	}
 
 	if closer, ok := cw.(io.Closer); ok {
-        closer.Close()
-    }
+		closer.Close()
+	}
 }

@@ -10,8 +10,8 @@ import (
 	"os"
 
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 func HandleShare(conn io.ReadWriter, filepath string, storage persistent.Storage) (err error) {

@@ -25,7 +25,7 @@ func Get(pw io.Writer, storage persistent.Storage, filehash string) error {
 	// randomize the addres order for load balancing
 	addresses := make([]string, len(storage[filehash]))
 	perm := rand.Perm(len(addresses))
-	for i, v := range(perm) {
+	for i, v := range perm {
 		addresses[v] = storage[filehash][i]
 	}
 	for i := 0; i < len(addresses); i++ {
