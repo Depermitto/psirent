@@ -153,12 +153,16 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 	for {
 		// Send
 		if _, err = fmt.Fprintf(crw, "GET:%v\n", filehash); err != nil {
+			// Check for fragments and remove them
+			removeFragments(filehash)
 			return
 		}
 		// Wait
 		scanner := bufio.NewScanner(crw)
 		if !scanner.Scan() {
 			err = errors2.ErrLostConnection
+			// Check for fragments and remove them
+			removeFragments(filehash)
 			return
 		}
 
