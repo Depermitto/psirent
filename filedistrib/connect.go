@@ -128,7 +128,10 @@ mainloop:
 			}
 		case "ls":
 			if filehashes, err := peer.Ls(conn); err == nil {
-				fmt.Println(filehashes)
+				fmt.Printf("%d available files:", len(filehashes))
+				for _, filehash := range filehashes {
+					fmt.Printf("\n  %v", filehash)
+				}
 			}
 		case "help":
 			fmt.Println("Commands: ")
