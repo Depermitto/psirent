@@ -8,9 +8,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/peterh/liner"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
@@ -105,7 +107,7 @@ mainloop:
 				continue
 			}
 			filehash := parts[1]
-			err := peer.Get(conn, filehash)
+			err := peer.Get(conn, filehash, storage)
 			if errors.Is(err, errors2.ErrGetFileNotShared) {
 				fmt.Printf("no file found with the specified hash\n")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
@@ -120,17 +122,9 @@ mainloop:
 			}
 
 			filepath := parts[1]
-			filehash, err := peer.Share(conn, filepath)
-			if os.IsNotExist(err) {
-				fmt.Printf("file %v does not exist\n", filepath)
-			} else if errors.Is(err, errors2.ErrShareDuplicate) {
-				fmt.Println("already shared")
-			} else if _, isPathErr := err.(*os.PathError); isPathErr {
-				fmt.Println("can only share files, directories are not supported")
-			} else if err != nil {
+			err := peer.HandleShare(conn, filepath, storage)
+			if err != nil {
 				return err
-			} else {
-				storage[filehash] = append(storage[filehash], filepath)
 			}
 		case "ls":
 			if filehashes, err := peer.Ls(conn); err == nil {
@@ -168,6 +162,19 @@ func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
 		switch strings.ToLower(parts[0]) {
 		case "has":
 			peer.Has(conn, storage, parts[1])
+		case "frag":
+			// firstly convert numbers
+			fragNo, err := strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				fmt.Fprintln(conn, coms.FragNotOk)
+				continue
+			}
+			totalFragments, err := strconv.ParseInt(parts[2], 10, 64)
+			if err != nil {
+				fmt.Fprintln(conn, coms.FragNotOk)
+				continue
+			}
+			peer.Fragment(conn, storage, fragNo, totalFragments, parts[3])
 		}
 	}
 	return nil
