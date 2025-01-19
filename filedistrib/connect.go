@@ -30,10 +30,10 @@ func Connect(addr string, myListenAddr string) error {
 	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
-		log.Fatalf("%s Error connecting to %v (%v) \n", constants.PEER_PREFIX, addr, err)
+		log.Fatalf("%s Error connecting to %v (%v) \n", constants.PeerPrefix, addr, err)
 	}
 	defer conn.Close()
-	fmt.Printf("%s Connected to %v\n", constants.PEER_PREFIX, conn.RemoteAddr())
+	fmt.Printf("%s Connected to %v\n", constants.PeerPrefix, conn.RemoteAddr())
 
 	// Read from persistent storage
 	storage, err := persistent.Read(sharedFilesPath)
@@ -42,13 +42,13 @@ func Connect(addr string, myListenAddr string) error {
 		return err
 	}
 	defer persistent.Save(storage, sharedFilesPath)
-	log.Printf("%s Storage read, %v files available...\n", constants.PEER_PREFIX, len(storage))
+	log.Printf("%s Storage read, %v files available...\n", constants.PeerPrefix, len(storage))
 
 	// Listen for messages from the coordinator or other peers
 	// @TODO: Limit the number of connections to constants.MAX_ADDR_NUM
 	listener, err := net.Listen("tcp4", myListenAddr)
 	if err != nil {
-		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PEER_PREFIX, myListenAddr, err)
+		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PeerPrefix, myListenAddr, err)
 	}
 	defer listener.Close()
 
@@ -105,21 +105,21 @@ mainloop:
 		switch parts[0] {
 		case "get":
 			if len(parts) < 2 {
-				fmt.Println(constants.PEER_PREFIX, "Required positional argument <filehash> is missing")
+				fmt.Println(constants.PeerPrefix, "Required positional argument <filehash> is missing")
 				continue
 			}
 			filehash := parts[1]
 			err := peer.Get(conn, filehash, myListenAddr, storage)
 			if errors.Is(err, errors2.ErrGetFileNotShared) {
-				fmt.Println(constants.HOST_PREFIX, "No file found with the specified hash")
+				fmt.Println(constants.HostPrefix, "No file found with the specified hash")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
-				fmt.Println(constants.HOST_PREFIX, "No peers that have the requested file are reachable right now")
+				fmt.Println(constants.HostPrefix, "No peers that have the requested file are reachable right now")
 			} else if err != nil {
 				return err
 			}
 		case "share":
 			if len(parts) < 2 {
-				fmt.Println(constants.PEER_PREFIX, "Required positional argument <filepath> is missing")
+				fmt.Println(constants.PeerPrefix, "Required positional argument <filepath> is missing")
 				continue
 			}
 
@@ -130,7 +130,7 @@ mainloop:
 			}
 		case "ls":
 			if filehashes, err := peer.Ls(conn); err == nil {
-				fmt.Printf("%s %d available files:", constants.HOST_PREFIX, len(filehashes))
+				fmt.Printf("%s %d available files:", constants.HostPrefix, len(filehashes))
 				for _, filehash := range filehashes {
 					fmt.Printf("\n  %v", filehash)
 				}

@@ -23,7 +23,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	defer waitGroup.Done()
 	conn, err := net.Dial("tcp", peer)
 	if err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -31,7 +31,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 
 	// Send fragment request
 	if _, err = fmt.Fprintf(conn, "FRAG:%v:%v:%v\n", fragNo, totalFragments, filehash); err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -42,7 +42,7 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Read filename
 	fname, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
@@ -56,24 +56,24 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	status, err := reader.ReadString('\n')
 	// Check if an error occurred
 	if err != nil && err != io.EOF {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
 	msg := strings.TrimSuffix(status, "\n")
 	var expectedSize int
 	if msg == coms.FragEmpty {
-		fmt.Printf("%s Fragment %d is empty\n", constants.PEER_PREFIX, fragNo)
+		fmt.Printf("%s Fragment %d is empty\n", constants.PeerPrefix, fragNo)
 		emptyFrags <- fragNo // mark as empty
 		return
 	} else if msg == coms.FragNotOk {
-		fmt.Printf("%s Fragment %d is not ok\n", constants.PEER_PREFIX, fragNo)
+		fmt.Printf("%s Fragment %d is not ok\n", constants.PeerPrefix, fragNo)
 		results <- fragNo // mark as failed
 		return
 	} else { // assume that status contains file size
 		expectedSize, err = strconv.Atoi(msg)
 		if err != nil {
-			fmt.Println(constants.PEER_PREFIX, err)
+			fmt.Println(constants.PeerPrefix, err)
 			results <- fragNo // mark as failed
 			return
 		}
@@ -82,27 +82,27 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Save fragment
 	file, err := os.Create(fmt.Sprintf("%s.frag%d", filehash, fragNo))
 	if err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
 	defer file.Close()
 
 	// Read and save the fragment
-	buffer := make([]byte, constants.FILE_CHUNK)
+	buffer := make([]byte, constants.FileChunk)
 	for {
 		bytesRead, err := reader.Read(buffer)
 		if err != nil {
 			if err == io.EOF {
 				break // End of file, stop reading
 			}
-			fmt.Println(constants.PEER_PREFIX, err)
+			fmt.Println(constants.PeerPrefix, err)
 			results <- fragNo // mark as failed
 			return            // Handle other errors
 		}
 		if bytesRead > 0 {
 			if _, writeErr := file.Write(buffer[:bytesRead]); writeErr != nil {
-				fmt.Println(constants.PEER_PREFIX, writeErr)
+				fmt.Println(constants.PeerPrefix, writeErr)
 				results <- fragNo // mark as failed
 				return
 			}
@@ -111,23 +111,23 @@ func downloadFragment(peer string, fragNo int, totalFragments int, filehash stri
 	// Check if the fragment size matches the expected size
 	fileInfo, err := file.Stat()
 	if err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		results <- fragNo // mark as failed
 		return
 	}
 	if fileInfo.Size() != int64(expectedSize) {
-		fmt.Printf("%s Fragment %d incomplete(%d vs %d)\n", constants.PEER_PREFIX, fragNo, fileInfo.Size(), expectedSize)
+		fmt.Printf("%s Fragment %d incomplete(%d vs %d)\n", constants.PeerPrefix, fragNo, fileInfo.Size(), expectedSize)
 		results <- fragNo // mark as failed
 		return
 	}
-	fmt.Printf("%s Fragment %d saved\n", constants.PEER_PREFIX, fragNo)
+	fmt.Printf("%s Fragment %d saved\n", constants.PeerPrefix, fragNo)
 }
 
 func removeFragments(filehash string) {
 	// Read the current directory
 	files, err := os.ReadDir(".")
 	if err != nil {
-		fmt.Println(constants.PEER_PREFIX, err)
+		fmt.Println(constants.PeerPrefix, err)
 		return
 	}
 	// Remove fragments
@@ -135,7 +135,7 @@ func removeFragments(filehash string) {
 		if strings.HasPrefix(file.Name(), filehash+".frag") {
 			err = os.Remove(file.Name())
 			if err != nil {
-				fmt.Println(constants.PEER_PREFIX, err)
+				fmt.Println(constants.PeerPrefix, err)
 			}
 		}
 	}
@@ -222,7 +222,7 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 		}
 
 		// Retry failed fragments
-		fmt.Printf("%s Retrying failed fragments: %v\n", constants.PEER_PREFIX, failedFragments)
+		fmt.Printf("%s Retrying failed fragments: %v\n", constants.PeerPrefix, failedFragments)
 	}
 
 	// Check if the result folder exists and create it if not
@@ -237,7 +237,7 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 	fmt.Printf("Reassembling the file %v...\n", filename)
 	// Check if filename was set
 	if filename == "" {
-		err = fmt.Errorf("%s Filename was not set by any peer", constants.PEER_PREFIX)
+		err = fmt.Errorf("%s Filename was not set by any peer", constants.PeerPrefix)
 		return
 	}
 	filename = "received/" + filename
@@ -250,7 +250,7 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 	for i := 1; i <= totalFragments; i++ {
 		// Check if fragment is marked as empty
 		if _, ok := emptyFragSet[i]; ok {
-			fmt.Printf("%s Skipping empty fragment %d\n", constants.PEER_PREFIX, i)
+			fmt.Printf("%s Skipping empty fragment %d\n", constants.PeerPrefix, i)
 			continue
 		}
 		// Open fragment
@@ -270,8 +270,8 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 			return err
 		}
 	}
-	fmt.Println(constants.PEER_PREFIX, "File reassembled!")
-	fmt.Println(constants.PEER_PREFIX, "Sharing the file...")
+	fmt.Println(constants.PeerPrefix, "File reassembled!")
+	fmt.Println(constants.PeerPrefix, "Sharing the file...")
 	// Share the file
 	err = HandleShare(crw, filename, myListenAddr, storage)
 	if err != nil {

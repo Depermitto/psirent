@@ -35,7 +35,7 @@ func Get(pw io.Writer, storage persistent.Storage, filehash string) error {
 			if Has(conn, filehash) {
 				validAddresses = append(validAddresses, address)
 				// limit the number of addresses
-				if len(validAddresses) == constants.MAX_ADDR_NUM {
+				if len(validAddresses) == constants.MaxAddrNum {
 					break
 				}
 			} else {

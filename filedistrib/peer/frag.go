@@ -27,8 +27,8 @@ func Fragment(cw io.Writer, storage persistent.Storage, fragNo int64, totalFragm
 	// calculate fragment size
 	fileSize := fileInfo.Size()
 	fragSize := fileSize / totalFragments
-	if remainder := fragSize % constants.FILE_CHUNK; remainder > 0 {
-		fragSize += constants.FILE_CHUNK - remainder // round up to multiple of FILE_CHUNK
+	if remainder := fragSize % constants.FileChunk; remainder > 0 {
+		fragSize += constants.FileChunk - remainder // round up to multiple of FILE_CHUNK
 	}
 	fragStart := (fragNo - 1) * fragSize // fragment starting point
 
@@ -59,7 +59,7 @@ func Fragment(cw io.Writer, storage persistent.Storage, fragNo int64, totalFragm
 	fmt.Fprintln(cw, min(fragSize, fileSize-fragStart))
 
 	// Send the fragment in chunks
-	buffer := make([]byte, constants.FILE_CHUNK)
+	buffer := make([]byte, constants.FileChunk)
 	remaining := fragSize
 	for remaining > 0 {
 		chunkSize := int64(len(buffer))

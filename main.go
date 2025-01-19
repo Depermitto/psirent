@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	"os"
 	"syscall"
 )
@@ -33,8 +34,8 @@ func main() {
 	}
 
 	flag.Parse()
-	addr := fmt.Sprintf("%v:6000", *host)
-	peerListenAddr := fmt.Sprintf("%v:6001", *peerListenHost)
+	addr := fmt.Sprintf("%v:%v", *host, constants.CoordinatorPort)
+	peerListenAddr := fmt.Sprintf("%v:%v", *peerListenHost, constants.PeerPort)
 
 	command := flag.Arg(0)
 	if command == "create-network" {

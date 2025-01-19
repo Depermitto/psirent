@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
@@ -86,9 +88,9 @@ func handlePeerConnection(conn net.Conn, storage persistent.Storage) error {
 			} else if !errors.Is(err, errors2.ErrGetFileNotShared) && !errors.Is(err, errors2.ErrGetNoPeerOnline) {
 				return err
 			}
-
 		case "share":
-			filehash, peerListenAddr := parts[1], parts[2]
+			filehash := parts[1]
+			peerListenAddr := parts[2] + ":" + strconv.Itoa(constants.PeerPort)
 			if err := coordinator.Share(conn, storage, filehash, peerListenAddr); err == nil {
 				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), filehash)
 			} else if !errors.Is(err, errors2.ErrShareDuplicate) {

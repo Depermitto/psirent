@@ -18,11 +18,11 @@ import (
 func HandleShare(conn io.ReadWriter, filepath string, myListenAddr string, storage persistent.Storage) (err error) {
 	filehash, err := Share(conn, filepath, myListenAddr)
 	if os.IsNotExist(err) {
-		fmt.Printf("%s file %v does not exist\n", constants.PEER_PREFIX, filepath)
+		fmt.Printf("%s file %v does not exist\n", constants.PeerPrefix, filepath)
 	} else if errors.Is(err, errors2.ErrShareDuplicate) {
-		fmt.Printf("%s You have already shared this file\n", constants.HOST_PREFIX)
+		fmt.Printf("%s You have already shared this file\n", constants.HostPrefix)
 	} else if _, isPathErr := err.(*os.PathError); isPathErr {
-		fmt.Printf("%s You can only share files, directories are not supported.\n", constants.HOST_PREFIX)
+		fmt.Printf("%s You can only share files, directories are not supported.\n", constants.HostPrefix)
 	} else if err != nil {
 		return err
 	} else {
@@ -32,7 +32,7 @@ func HandleShare(conn io.ReadWriter, filepath string, myListenAddr string, stora
 }
 
 func Share(crw io.ReadWriter, filepath string, myListenAddr string) (filehash string, err error) {
-	fmt.Println(constants.PEER_PREFIX, "Sharing", filepath, "...")
+	fmt.Println(constants.PeerPrefix, "Sharing", filepath, "...")
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return "", err
