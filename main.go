@@ -8,6 +8,7 @@ import (
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	"os"
 	"syscall"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 func main() {
@@ -42,9 +43,10 @@ func main() {
 		_ = filedistrib.CreateNetwork(addr)
 	} else if command == "connect" {
 		err := filedistrib.Connect(addr, peerListenAddr)
-		if errors.Is(err, syscall.EPIPE) {
+		if errors.Is(err, syscall.EPIPE) || errors.Is(err, errors2.ErrLostConnection) {
 			fmt.Println("host disconnected, closing connection...")
 		} else if err != nil {
+			fmt.Printf("%v", err)
 			fmt.Println("unknown error occurred, closing connection...")
 		}
 	} else {

@@ -136,6 +136,8 @@ mainloop:
 					fmt.Printf("\n  %v", filehash)
 				}
 				fmt.Println()
+			} else {
+				return err
 			}
 		case "help":
 			fmt.Println("Commands: ")
