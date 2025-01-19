@@ -54,9 +54,10 @@ func Connect(addr string, myListenAddr string) error {
 
 	// Await coordinator/peer connections
 	go func() {
+		semaphore := make(chan struct{}, constants.MaxAddrNum)
 		for {
-			if conn, err := listener.Accept(); err == nil {
-				go handleIncomingConnection(conn, storage)
+			if incomingConn, err := listener.Accept(); err == nil {
+				go handleIncomingConnection(incomingConn, semaphore, storage)
 			}
 		}
 	}()
@@ -159,7 +160,7 @@ mainloop:
 	return nil
 }
 
-func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
+func handleIncomingConnection(conn net.Conn, peerSemaphore chan struct{}, storage persistent.Storage) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -180,7 +181,12 @@ func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
 				fmt.Fprintln(conn, coms.FragNotOk)
 				continue
 			}
+			// take a slot in the semaphore
+			peerSemaphore <- struct{}{}
+			// download a fragment
 			peer.Fragment(conn, storage, fragNo, totalFragments, parts[3])
+			// release our slot
+			<-peerSemaphore
 		}
 	}
 	return nil
