@@ -40,7 +40,7 @@ func main() {
 
 	command := flag.Arg(0)
 	if command == "create-network" {
-		_ = filedistrib.CreateNetwork(addr, peerListenAddr)
+		_ = filedistrib.CreateNetwork(addr)
 	} else if command == "connect" {
 		err := filedistrib.Connect(addr, peerListenAddr)
 		if errors.Is(err, syscall.EPIPE) {

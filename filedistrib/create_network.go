@@ -18,7 +18,7 @@ import (
 
 const storagePath = "filedistrib/coordinator/storage.json"
 
-func CreateNetwork(addr string, peerListenAddr string) error {
+func CreateNetwork(addr string) error {
 	// Set up the server
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
@@ -67,13 +67,13 @@ mainloop:
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
-			go handlePeerConnection(conn, storage, peerListenAddr) //@TODO: peerListenAddr is wrong, remove it and get address somewhere else
+			go handlePeerConnection(conn, storage)
 		}
 	}
 	return nil
 }
 
-func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenAddr string) error {
+func handlePeerConnection(conn net.Conn, storage persistent.Storage) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -88,8 +88,9 @@ func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenA
 			}
 
 		case "share":
-			if err := coordinator.Share(conn, storage, parts[1], peerListenAddr); err == nil {
-				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
+			filehash, peerListenAddr := parts[1], parts[2]
+			if err := coordinator.Share(conn, storage, filehash, peerListenAddr); err == nil {
+				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), filehash)
 			} else if !errors.Is(err, errors2.ErrShareDuplicate) {
 				return err
 			}

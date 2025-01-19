@@ -26,7 +26,7 @@ const (
 
 var commands = [5]string{"get", "share", "ls", "help", "quit"}
 
-func Connect(addr string, peerListenAddr string) error {
+func Connect(addr string, myListenAddr string) error {
 	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
@@ -46,9 +46,9 @@ func Connect(addr string, peerListenAddr string) error {
 
 	// Listen for messages from the coordinator or other peers
 	// @TODO: Limit the number of connections to constants.MAX_ADDR_NUM
-	listener, err := net.Listen("tcp4", peerListenAddr)
+	listener, err := net.Listen("tcp4", myListenAddr)
 	if err != nil {
-		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PEER_PREFIX, peerListenAddr, err)
+		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PEER_PREFIX, myListenAddr, err)
 	}
 	defer listener.Close()
 
@@ -87,10 +87,10 @@ func Connect(addr string, peerListenAddr string) error {
 		}()
 	}
 	// Contains app loop
-	return handleOutgoingConnection(conn, storage, l)
+	return handleOutgoingConnection(conn, myListenAddr, storage, l)
 }
 
-func handleOutgoingConnection(conn net.Conn, storage persistent.Storage, l *liner.State) error {
+func handleOutgoingConnection(conn net.Conn, myListenAddr string, storage persistent.Storage, l *liner.State) error {
 mainloop:
 	for {
 		cmd, err := l.Prompt("PSIrent> ")
@@ -109,7 +109,7 @@ mainloop:
 				continue
 			}
 			filehash := parts[1]
-			err := peer.Get(conn, filehash, storage)
+			err := peer.Get(conn, filehash, myListenAddr, storage)
 			if errors.Is(err, errors2.ErrGetFileNotShared) {
 				fmt.Println(constants.HOST_PREFIX, "No file found with the specified hash")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
@@ -124,7 +124,7 @@ mainloop:
 			}
 
 			filepath := parts[1]
-			err := peer.HandleShare(conn, filepath, storage)
+			err := peer.HandleShare(conn, filepath, myListenAddr, storage)
 			if err != nil {
 				return err
 			}
@@ -134,6 +134,7 @@ mainloop:
 				for _, filehash := range filehashes {
 					fmt.Printf("\n  %v", filehash)
 				}
+				fmt.Println()
 			}
 		case "help":
 			fmt.Println("Commands: ")

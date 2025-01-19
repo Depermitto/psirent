@@ -15,8 +15,8 @@ import (
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
-func HandleShare(conn io.ReadWriter, filepath string, storage persistent.Storage) (err error) {
-	filehash, err := Share(conn, filepath)
+func HandleShare(conn io.ReadWriter, filepath string, myListenAddr string, storage persistent.Storage) (err error) {
+	filehash, err := Share(conn, filepath, myListenAddr)
 	if os.IsNotExist(err) {
 		fmt.Printf("%s file %v does not exist\n", constants.PEER_PREFIX, filepath)
 	} else if errors.Is(err, errors2.ErrShareDuplicate) {
@@ -31,7 +31,7 @@ func HandleShare(conn io.ReadWriter, filepath string, storage persistent.Storage
 	return nil
 }
 
-func Share(crw io.ReadWriter, filepath string) (filehash string, err error) {
+func Share(crw io.ReadWriter, filepath string, myListenAddr string) (filehash string, err error) {
 	fmt.Println(constants.PEER_PREFIX, "Sharing", filepath, "...")
 	data, err := os.ReadFile(filepath)
 	if err != nil {
@@ -40,7 +40,7 @@ func Share(crw io.ReadWriter, filepath string) (filehash string, err error) {
 	sum := sha256.Sum256(data)
 	filehash = hex.EncodeToString(sum[:])
 	// Send
-	if _, err = fmt.Fprintf(crw, "SHARE:%v\n", filehash); err != nil {
+	if _, err = fmt.Fprintf(crw, "SHARE:%v:%v\n", filehash, myListenAddr); err != nil {
 		return
 	}
 	// Wait

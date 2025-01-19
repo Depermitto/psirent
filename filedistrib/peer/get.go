@@ -141,7 +141,7 @@ func removeFragments(filehash string) {
 	}
 }
 
-func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err error) {
+func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persistent.Storage) (err error) {
 	// Reset filename
 	filename = ""
 	filenameOnce = sync.Once{}
@@ -273,7 +273,7 @@ func Get(crw io.ReadWriter, filehash string, storage persistent.Storage) (err er
 	fmt.Println(constants.PEER_PREFIX, "File reassembled!")
 	fmt.Println(constants.PEER_PREFIX, "Sharing the file...")
 	// Share the file
-	err = HandleShare(crw, filename, storage)
+	err = HandleShare(crw, filename, myListenAddr, storage)
 	if err != nil {
 		return err
 	}
