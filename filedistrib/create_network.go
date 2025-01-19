@@ -16,7 +16,7 @@ import (
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
-const storagePath = "filedistrib/coordinator/storage.json"
+const storagePath = "coordinator.json"
 
 func CreateNetwork(addr string) error {
 	// Set up the server
