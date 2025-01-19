@@ -1,4 +1,5 @@
 package constants
+
 import (
 	"time"
 )
