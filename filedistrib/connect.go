@@ -30,10 +30,12 @@ func Connect(addr string, myListenAddr string) error {
 	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
-		log.Fatalf("%s Error connecting to %v (%v) \n", constants.PeerPrefix, addr, err)
+		fmt.Printf("%s Error connecting to %v (%v) \n", constants.PEER_PREFIX, addr, err)
+		return err
 	}
 	defer conn.Close()
-	fmt.Printf("%s Connected to %v\n", constants.PeerPrefix, conn.RemoteAddr())
+
+	fmt.Printf("%s Connected to %v\n", constants.PEER_PREFIX, conn.RemoteAddr())
 
 	// Read from persistent storage
 	storage, err := persistent.Read(sharedFilesPath)
@@ -137,6 +139,7 @@ mainloop:
 				}
 				fmt.Println()
 			} else {
+				fmt.Printf("%v\n", err)
 				return err
 			}
 		case "help":

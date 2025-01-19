@@ -4,11 +4,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/common"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"os"
 	"syscall"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 func main() {
@@ -42,11 +43,16 @@ func main() {
 	if command == "create-network" {
 		_ = filedistrib.CreateNetwork(addr)
 	} else if command == "connect" {
+	retry:
 		err := filedistrib.Connect(addr, peerListenAddr)
-		if errors.Is(err, syscall.EPIPE) || errors.Is(err, errors2.ErrLostConnection) {
-			fmt.Println("host disconnected, closing connection...")
+		if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, errors2.ErrLostConnection) {
+			err = common.Reconnect(addr, peerListenAddr)
+			if err != nil {
+				fmt.Println("host disconnected, closing connection...")
+			} else {
+				goto retry // Retry Connect after a successful Reconnect
+			}
 		} else if err != nil {
-			fmt.Printf("%v", err)
 			fmt.Println("unknown error occurred, closing connection...")
 		}
 	} else {

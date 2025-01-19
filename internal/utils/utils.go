@@ -12,7 +12,6 @@ func Retry(retryFunc RetryFunc, maxIterations int, delay time.Duration) error {
 	for i := 0; i < maxIterations; i++ {
 		err = retryFunc()
 		if err == nil {
-      fmt.Println("returned nil, break the loop")
 			return nil
 		}
 		fmt.Printf("Attempt %d/%d failed: %v. Retrying in %v seconds...\n", i+1, maxIterations, err, delay.Seconds())
