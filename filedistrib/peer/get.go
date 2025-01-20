@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
@@ -143,6 +144,7 @@ func removeFragments(filehash string) {
 
 func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persistent.Storage) (err error) {
 	// Reset filename
+	startTime := time.Now()
 	filename = ""
 	filenameOnce = sync.Once{}
 	// Prevents size mismatch if retrying download
@@ -269,8 +271,10 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 		if err != nil {
 			return err
 		}
-	}
+	}	
+	duration := time.Since(startTime)
 	fmt.Println(constants.PeerPrefix, "File reassembled!")
+	fmt.Printf("Download completed in %v\n", duration)
 	fmt.Println(constants.PeerPrefix, "Sharing the file...")
 	// Share the file
 	err = HandleShare(crw, filename, myListenAddr, storage)

@@ -138,6 +138,8 @@ mainloop:
 					fmt.Printf("\n  %v", filehash)
 				}
 				fmt.Println()
+			} else if errors.Is(err, errors2.ErrLsEmpty) {
+				fmt.Println(constants.HostPrefix, "No files are available to download.")
 			} else {
 				return err
 			}		
