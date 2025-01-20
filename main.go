@@ -4,7 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/common"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/utils"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
@@ -46,7 +46,7 @@ func main() {
 	retry:
 		err := filedistrib.Connect(addr, peerListenAddr)
 		if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, errors2.ErrLostConnection) {
-			err = common.Reconnect(addr, peerListenAddr)
+			err = utils.Reconnect(addr, peerListenAddr)
 			if err != nil {
 				fmt.Println("host disconnected, closing connection...")
 			} else {
