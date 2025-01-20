@@ -8,11 +8,14 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/peterh/liner"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
@@ -23,14 +26,16 @@ const (
 
 var commands = [5]string{"get", "share", "ls", "help", "quit"}
 
-func Connect(addr string, peerListenAddr string) error {
+func Connect(addr string, myListenAddr string) error {
 	// Connect to the coordinator
 	conn, err := net.Dial("tcp4", addr)
 	if err != nil {
-		log.Fatalf("error connecting to %v (%v) \n", addr, err)
+		fmt.Printf("%s Error connecting to %v (%v) \n", constants.PeerPrefix, addr, err)
+		return err
 	}
 	defer conn.Close()
-	fmt.Printf("connected to %v\n", conn.RemoteAddr())
+
+	fmt.Printf("%s Connected to %v\n", constants.PeerPrefix, conn.RemoteAddr())
 
 	// Read from persistent storage
 	storage, err := persistent.Read(sharedFilesPath)
@@ -39,20 +44,22 @@ func Connect(addr string, peerListenAddr string) error {
 		return err
 	}
 	defer persistent.Save(storage, sharedFilesPath)
-	log.Printf("storage read, %v available files...\n", len(storage))
+	log.Printf("%s Storage read, %v files available...\n", constants.PeerPrefix, len(storage))
 
 	// Listen for messages from the coordinator or other peers
-	listener, err := net.Listen("tcp4", peerListenAddr)
+	// @TODO: Limit the number of connections to constants.MAX_ADDR_NUM
+	listener, err := net.Listen("tcp4", myListenAddr)
 	if err != nil {
-		log.Fatalf("error creating a network on %v (%v) \n", peerListenAddr, err)
+		log.Fatalf("%s Error creating a network on %v (%v) \n", constants.PeerPrefix, myListenAddr, err)
 	}
 	defer listener.Close()
 
 	// Await coordinator/peer connections
 	go func() {
+		semaphore := make(chan struct{}, constants.MaxAddrNum)
 		for {
-			if conn, err := listener.Accept(); err == nil {
-				go handleIncomingConnection(conn, storage)
+			if incomingConn, err := listener.Accept(); err == nil {
+				go handleIncomingConnection(incomingConn, semaphore, storage)
 			}
 		}
 	}()
@@ -83,13 +90,13 @@ func Connect(addr string, peerListenAddr string) error {
 		}()
 	}
 	// Contains app loop
-	return handleOutgoingConnection(conn, storage, l)
+	return handleOutgoingConnection(conn, myListenAddr, storage, l)
 }
 
-func handleOutgoingConnection(conn net.Conn, storage persistent.Storage, l *liner.State) error {
+func handleOutgoingConnection(conn net.Conn, myListenAddr string, storage persistent.Storage, l *liner.State) error {
 mainloop:
 	for {
-		cmd, err := l.Prompt("psirent> ")
+		cmd, err := l.Prompt("PSIrent> ")
 		if errors.Is(err, io.EOF) {
 			break mainloop
 		} else if err != nil {
@@ -101,41 +108,41 @@ mainloop:
 		switch parts[0] {
 		case "get":
 			if len(parts) < 2 {
-				fmt.Println("required positional argument <filehash> is missing")
+				fmt.Println(constants.PeerPrefix, "Required positional argument <filehash> is missing")
 				continue
 			}
 			filehash := parts[1]
-			err := peer.Get(conn, filehash)
+			err := peer.Get(conn, filehash, myListenAddr, storage)
 			if errors.Is(err, errors2.ErrGetFileNotShared) {
-				fmt.Printf("no file found with the specified hash\n")
+				fmt.Println(constants.HostPrefix, "No file found with the specified hash")
 			} else if errors.Is(err, errors2.ErrGetNoPeerOnline) {
-				fmt.Println("no peers that have the requested file are reachable right now")
+				fmt.Println(constants.HostPrefix, "No peers that have the requested file are reachable right now")
 			} else if err != nil {
 				return err
 			}
 		case "share":
 			if len(parts) < 2 {
-				fmt.Println("required positional argument <filepath> is missing")
+				fmt.Println(constants.PeerPrefix, "Required positional argument <filepath> is missing")
 				continue
 			}
 
 			filepath := parts[1]
-			filehash, err := peer.Share(conn, filepath)
-			if os.IsNotExist(err) {
-				fmt.Printf("file %v does not exist\n", filepath)
-			} else if errors.Is(err, errors2.ErrShareDuplicate) {
-				fmt.Println("already shared")
-			} else if _, isPathErr := err.(*os.PathError); isPathErr {
-				fmt.Println("can only share files, directories are not supported")
-			} else if err != nil {
+			err := peer.HandleShare(conn, filepath, myListenAddr, storage)
+			if err != nil {
 				return err
-			} else {
-				storage[filehash] = append(storage[filehash], filepath)
 			}
 		case "ls":
 			if filehashes, err := peer.Ls(conn); err == nil {
-				fmt.Println(filehashes)
-			}
+				fmt.Printf("%s %d available files:", constants.HostPrefix, len(filehashes))
+				for _, filehash := range filehashes {
+					fmt.Printf("\n  %v", filehash)
+				}
+				fmt.Println()
+			} else if errors.Is(err, errors2.ErrLsEmpty) {
+				fmt.Println(constants.HostPrefix, "No files are available to download.")
+			} else {
+				return err
+			}		
 		case "help":
 			fmt.Println("Commands: ")
 
@@ -159,7 +166,7 @@ mainloop:
 	return nil
 }
 
-func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
+func handleIncomingConnection(conn net.Conn, peerSemaphore chan struct{}, storage persistent.Storage) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -168,6 +175,24 @@ func handleIncomingConnection(conn net.Conn, storage persistent.Storage) error {
 		switch strings.ToLower(parts[0]) {
 		case "has":
 			peer.Has(conn, storage, parts[1])
+		case "frag":
+			// firstly convert numbers
+			fragNo, err := strconv.ParseInt(parts[1], 10, 64)
+			if err != nil {
+				fmt.Fprintln(conn, coms.FragNotOk)
+				continue
+			}
+			totalFragments, err := strconv.ParseInt(parts[2], 10, 64)
+			if err != nil {
+				fmt.Fprintln(conn, coms.FragNotOk)
+				continue
+			}
+			// take a slot in the semaphore
+			peerSemaphore <- struct{}{}
+			// download a fragment
+			peer.Fragment(conn, storage, fragNo, totalFragments, parts[3])
+			// release our slot
+			<-peerSemaphore
 		}
 	}
 	return nil

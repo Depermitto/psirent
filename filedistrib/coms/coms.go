@@ -14,4 +14,7 @@ const (
 
 	GetNotOK  = "GNO"
 	GetNoPeer = "GNP"
+
+	FragNotOk = "FNO"
+	FragEmpty = "FEM"
 )

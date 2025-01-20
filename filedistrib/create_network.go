@@ -4,20 +4,23 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
+
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 const storagePath = "coordinator.json"
 
-func CreateNetwork(addr string, peerListenAddr string) error {
+func CreateNetwork(addr string) error {
 	// Set up the server
 	listener, err := net.Listen("tcp4", addr)
 	if err != nil {
@@ -66,13 +69,13 @@ mainloop:
 			break mainloop
 		case conn := <-conns:
 			log.Printf("peer %v connected\n", conn.RemoteAddr())
-			go handlePeerConnection(conn, storage, peerListenAddr)
+			go handlePeerConnection(conn, storage)
 		}
 	}
 	return nil
 }
 
-func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenAddr string) error {
+func handlePeerConnection(conn net.Conn, storage persistent.Storage) error {
 	defer conn.Close()
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
@@ -85,10 +88,11 @@ func handlePeerConnection(conn net.Conn, storage persistent.Storage, peerListenA
 			} else if !errors.Is(err, errors2.ErrGetFileNotShared) && !errors.Is(err, errors2.ErrGetNoPeerOnline) {
 				return err
 			}
-
 		case "share":
-			if err := coordinator.Share(conn, storage, parts[1], peerListenAddr); err == nil {
-				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), parts[1])
+			filehash := parts[1]
+			peerListenAddr := parts[2] + ":" + strconv.Itoa(constants.PeerPort)
+			if err := coordinator.Share(conn, storage, filehash, peerListenAddr); err == nil {
+				log.Printf("peer %v shared %v\n", conn.RemoteAddr(), filehash)
 			} else if !errors.Is(err, errors2.ErrShareDuplicate) {
 				return err
 			}

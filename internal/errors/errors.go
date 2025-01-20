@@ -13,4 +13,6 @@ var (
 	ErrLsEmpty          = errors.New("no files available for download")
 	ErrGetFileNotShared = errors.New("no file with such filehash is shared")
 	ErrGetNoPeerOnline  = errors.New("no peers are reachable right now")
+
+	ErrRetryFailed = errors.New("failed to reconnect")
 )

@@ -4,14 +4,35 @@ import (
 	"bufio"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"io"
 	"os"
+
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
-func Share(crw io.ReadWriter, filepath string) (filehash string, err error) {
+func HandleShare(conn io.ReadWriter, filepath string, myListenAddr string, storage persistent.Storage) (err error) {
+	filehash, err := Share(conn, filepath, myListenAddr)
+	if os.IsNotExist(err) {
+		fmt.Printf("%s file %v does not exist\n", constants.PeerPrefix, filepath)
+	} else if errors.Is(err, errors2.ErrShareDuplicate) {
+		fmt.Printf("%s You have already shared this file\n", constants.HostPrefix)
+	} else if _, isPathErr := err.(*os.PathError); isPathErr {
+		fmt.Printf("%s You can only share files, directories are not supported.\n", constants.HostPrefix)
+	} else if err != nil {
+		return err
+	} else {
+		storage[filehash] = append(storage[filehash], filepath)
+	}
+	return nil
+}
+
+func Share(crw io.ReadWriter, filepath string, myListenAddr string) (filehash string, err error) {
+	fmt.Println(constants.PeerPrefix, "Sharing", filepath, "...")
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return "", err
@@ -19,7 +40,7 @@ func Share(crw io.ReadWriter, filepath string) (filehash string, err error) {
 	sum := sha256.Sum256(data)
 	filehash = hex.EncodeToString(sum[:])
 	// Send
-	if _, err = fmt.Fprintf(crw, "SHARE:%v\n", filehash); err != nil {
+	if _, err = fmt.Fprintf(crw, "SHARE:%v:%v\n", filehash, myListenAddr); err != nil {
 		return
 	}
 	// Wait

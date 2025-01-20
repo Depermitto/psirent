@@ -12,14 +12,19 @@ func Ls(pw io.Writer, storage persistent.Storage) (int, error) {
 	bufpw := bufio.NewWriter(pw)
 	available := 0
 	for filehash, ips := range storage {
+		hashSeen := false
 		for i, ip := range ips {
 			if conn, err := net.Dial("tcp4", ip); err == nil {
 				if Has(conn, filehash) {
-					if available > 0 {
-						_, _ = bufpw.WriteString(coms.LsSeparator)
+					// write only once
+					if !hashSeen {
+						if available > 0 {
+							_, _ = bufpw.WriteString(coms.LsSeparator)
+						}
+						_, _ = bufpw.WriteString(filehash)
+						available += 1
+						hashSeen = true
 					}
-					_, _ = bufpw.WriteString(filehash)
-					available += 1
 				} else {
 					persistent.Remove(storage, filehash, i)
 				}

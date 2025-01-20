@@ -4,7 +4,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/utils"
 	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib"
+	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
+	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 	"os"
 	"syscall"
 )
@@ -33,16 +36,22 @@ func main() {
 	}
 
 	flag.Parse()
-	addr := fmt.Sprintf("%v:6000", *host)
-	peerListenAddr := fmt.Sprintf("%v:6001", *peerListenHost)
+	addr := fmt.Sprintf("%v:%v", *host, constants.CoordinatorPort)
+	peerListenAddr := fmt.Sprintf("%v:%v", *peerListenHost, constants.PeerPort)
 
 	command := flag.Arg(0)
 	if command == "create-network" {
-		_ = filedistrib.CreateNetwork(addr, peerListenAddr)
+		_ = filedistrib.CreateNetwork(addr)
 	} else if command == "connect" {
+	retry:
 		err := filedistrib.Connect(addr, peerListenAddr)
-		if errors.Is(err, syscall.EPIPE) {
-			fmt.Println("host disconnected, closing connection...")
+		if errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, errors2.ErrLostConnection) {
+			err = utils.Reconnect(addr, peerListenAddr)
+			if err != nil {
+				fmt.Println("host disconnected, closing connection...")
+			} else {
+				goto retry // Retry Connect after a successful Reconnect
+			}
 		} else if err != nil {
 			fmt.Println("unknown error occurred, closing connection...")
 		}
