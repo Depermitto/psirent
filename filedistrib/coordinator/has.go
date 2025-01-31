@@ -3,7 +3,7 @@ package coordinator
 import (
 	"bufio"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
+	"github.com/Depermitto/psirent/filedistrib/coms"
 	"io"
 )
 

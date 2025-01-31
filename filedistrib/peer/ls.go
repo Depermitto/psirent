@@ -3,8 +3,8 @@ package peer
 import (
 	"bufio"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
+	"github.com/Depermitto/psirent/filedistrib/coms"
+	errors2 "github.com/Depermitto/psirent/internal/errors"
 	"io"
 	"strings"
 )

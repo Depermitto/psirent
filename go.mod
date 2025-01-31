@@ -1,4 +1,4 @@
-module gitlab-stud.elka.pw.edu.pl/psi54/psirent
+module github.com/Depermitto/psirent
 
 go 1.23
 

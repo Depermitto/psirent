@@ -2,8 +2,8 @@ package coordinator
 
 import (
 	"bufio"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
+	"github.com/Depermitto/psirent/filedistrib/coms"
+	"github.com/Depermitto/psirent/filedistrib/persistent"
 	"io"
 	"net"
 )

@@ -11,12 +11,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Depermitto/psirent/filedistrib/coms"
+	"github.com/Depermitto/psirent/filedistrib/peer"
+	"github.com/Depermitto/psirent/filedistrib/persistent"
+	"github.com/Depermitto/psirent/internal/constants"
+	errors2 "github.com/Depermitto/psirent/internal/errors"
 	"github.com/peterh/liner"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/peer"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
 )
 
 const (

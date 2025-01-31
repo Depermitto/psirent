@@ -5,9 +5,9 @@ import (
 	"io"
 	"os"
 
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coms"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
+	"github.com/Depermitto/psirent/filedistrib/coms"
+	"github.com/Depermitto/psirent/filedistrib/persistent"
+	"github.com/Depermitto/psirent/internal/constants"
 )
 
 func Fragment(cw io.Writer, storage persistent.Storage, fragNo int64, totalFragments int64, filehash string) {

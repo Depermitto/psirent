@@ -5,8 +5,8 @@ import (
 	"net"
 	"time"
 
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
+	"github.com/Depermitto/psirent/internal/constants"
+	errors2 "github.com/Depermitto/psirent/internal/errors"
 )
 
 func Reconnect(addr string, peerListenAddr string) error {

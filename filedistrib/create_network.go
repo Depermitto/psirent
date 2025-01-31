@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/constants"
+	"github.com/Depermitto/psirent/internal/constants"
 	"io"
 	"log"
 	"net"
@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/coordinator"
-	"gitlab-stud.elka.pw.edu.pl/psi54/psirent/filedistrib/persistent"
-	errors2 "gitlab-stud.elka.pw.edu.pl/psi54/psirent/internal/errors"
+	"github.com/Depermitto/psirent/filedistrib/coordinator"
+	"github.com/Depermitto/psirent/filedistrib/persistent"
+	errors2 "github.com/Depermitto/psirent/internal/errors"
 )
 
 const storagePath = "coordinator.json"
