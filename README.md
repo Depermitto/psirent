@@ -1,35 +1,28 @@
-# Zadanie projektowe
+# PSIrent
 
-Zaprojektować i zaimplementować rozwiązanie
-dla prostej sieci "torrentopodobnej" - pozwalające na skoordynowane ale
-i rozproszone przesyłanie plików w sposób zbliżony do tego, jak odbywa
-się to w rzeczywistych tego rodzaju sieciach.
+## Getting started
 
-## Nieuporządkowane hasła kluczowe
+Provided you have [go](https://go.dev/) installed, you can use this oneliner in the command-line:
 
-- koordynator, przechowujący informacje o wszystkich lokalizacjach,  które są w stanie dostarczyć określony plik,
-- raportowanie koordynatorowi udostępnianego pliku,
-- informowanie przez koordynatora o lokalizacjach, w których przechowywany jest plik,
-- równoległe pobieranie pliku w niewielkich fragmentach z różnych lokalizacji,
-- jednoczesne udostępnianie pliku (w całości lub fragmentach),
-- proste sterowanie/raporty/statystyki.
+```shell
+go install github.com/Depermitto/psirent@latest
+```
 
-## Projekt wstępny  (2024-12-20)
+## License
 
-- Założenia
-- Zakres realizacji
-- Przypadki użycia
-- Architektura
-- Obsługa sytuacji błędnych
-- Przypadki testowe
-- Podział prac w zespole
-- Scenariusz demonstracji
+This project is licensed by the MIT license.
 
-## Projekt końcowy wraz z demonstracją (2025-01-20)
+## Authors
 
-- Opis projektu i implementacji
-- Scenariusze komunikacji
-- Definicje komunikatów
-- Opisy zachowania podmiotów komunikacji
-- Wyniki testów
-- Podsumowanie
+<a href="https://github.com/Depermitto">
+  <img src="https://github.com/Depermitto.png" width="100" alt="GitHub Profile">
+</a>
+
+<a href="https://github.com/Duszke333">
+  <img src="https://github.com/Duszke333.png" width="100" alt="GitHub Profile">
+</a>
+
+<a href="https://github.com/jkosla">
+  <img src="https://github.com/jkosla.png" width="100" alt="GitHub Profile">
+</a>
+
