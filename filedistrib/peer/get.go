@@ -271,7 +271,7 @@ func Get(crw io.ReadWriter, filehash string, myListenAddr string, storage persis
 		if err != nil {
 			return err
 		}
-	}	
+	}
 	duration := time.Since(startTime)
 	fmt.Println(constants.PeerPrefix, "File reassembled!")
 	fmt.Printf("Download completed in %v\n", duration)

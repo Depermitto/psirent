@@ -29,7 +29,7 @@ func Get(pw io.Writer, storage persistent.Storage, filehash string) error {
 	}
 	for i := 0; i < len(addresses); i++ {
 		address := addresses[i]
-		d := net.Dialer{Timeout: constants.CONNECT_TIMEOUT} // timeout
+		d := net.Dialer{Timeout: constants.ConnectTimeout} // timeout
 		if conn, err := d.Dial("tcp", address); err == nil {
 			if Has(conn, filehash) {
 				validAddresses = append(validAddresses, address)
